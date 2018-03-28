@@ -41,28 +41,52 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
         mAngleY = angle;
     }
 
-    private float colors[] = {
-            0.8f, 0.0f, 0.0f, 1.0f, 0.0f, 0.8f, 0.0f, 1.0f, 0.0f, 0.0f, 0.8f, 1.0f,
-            0.8f, 0.8f, 0.0f, 1.0f, 0.0f, 0.8f, 0.8f, 1.0f, 0.8f, 0.0f, 0.8f, 1.0f,
-            0.8f, 0.0f, 0.0f, 1.0f, 0.0f, 0.8f, 0.0f, 1.0f, 0.0f, 0.0f, 0.8f, 1.0f,
-            0.8f, 0.8f, 0.0f, 1.0f, 0.0f, 0.8f, 0.8f, 1.0f, 0.8f, 0.0f, 0.8f, 1.0f,
-            0.8f, 0.0f, 0.0f, 1.0f, 0.0f, 0.8f, 0.0f, 1.0f, 0.0f, 0.0f, 0.8f, 1.0f,
-            0.8f, 0.8f, 0.0f, 1.0f, 0.0f, 0.8f, 0.8f, 1.0f, 0.8f, 0.0f, 0.8f, 1.0f,
-            0.8f, 0.0f, 0.0f, 1.0f, 0.0f, 0.8f, 0.0f, 1.0f, 0.0f, 0.0f, 0.8f, 1.0f,
-            0.8f, 0.8f, 0.0f, 1.0f, 0.0f, 0.8f, 0.8f, 1.0f, 0.8f, 0.0f, 0.8f, 1.0f,
-            0.8f, 0.0f, 0.0f, 1.0f, 0.0f, 0.8f, 0.0f, 1.0f, 0.0f, 0.0f, 0.8f, 1.0f,
-            0.8f, 0.8f, 0.0f, 1.0f, 0.0f, 0.8f, 0.8f, 1.0f, 0.8f, 0.0f, 0.8f, 1.0f,
-            0.8f, 0.0f, 0.0f, 1.0f, 0.0f, 0.8f, 0.0f, 1.0f, 0.0f, 0.0f, 0.8f, 1.0f,
-            0.8f, 0.8f, 0.0f, 1.0f
-    };
+//    private float color[] = {
+//            0.8f, 0.0f, 0.0f, 1.0f,
+//            0.0f, 0.8f, 0.0f, 1.0f,
+//            0.0f, 0.0f, 0.8f, 1.0f,
+//            0.8f, 0.8f, 0.0f, 1.0f,
+//            0.0f, 0.8f, 0.8f, 1.0f,
+//            0.8f, 0.0f, 0.8f, 1.0f
+//    };
 
-    private float color[] = {
+    private float colors[] = {
             0.8f, 0.0f, 0.0f, 1.0f,
             0.0f, 0.8f, 0.0f, 1.0f,
             0.0f, 0.0f, 0.8f, 1.0f,
             0.8f, 0.8f, 0.0f, 1.0f,
             0.0f, 0.8f, 0.8f, 1.0f,
             0.8f, 0.0f, 0.8f, 1.0f,
+            0.8f, 0.0f, 0.0f, 1.0f,
+            0.0f, 0.8f, 0.0f, 1.0f,
+            0.0f, 0.0f, 0.8f, 1.0f,
+            0.8f, 0.8f, 0.0f, 1.0f,
+            0.0f, 0.8f, 0.8f, 1.0f,
+            0.8f, 0.0f, 0.8f, 1.0f,
+            0.8f, 0.0f, 0.0f, 1.0f,
+            0.0f, 0.8f, 0.0f, 1.0f,
+            0.0f, 0.0f, 0.8f, 1.0f,
+            0.8f, 0.8f, 0.0f, 1.0f,
+            0.0f, 0.8f, 0.8f, 1.0f,
+            0.8f, 0.0f, 0.8f, 1.0f,
+            0.8f, 0.0f, 0.0f, 1.0f,
+            0.0f, 0.8f, 0.0f, 1.0f,
+            0.0f, 0.0f, 0.8f, 1.0f,
+            0.8f, 0.8f, 0.0f, 1.0f,
+            0.0f, 0.8f, 0.8f, 1.0f,
+            0.8f, 0.0f, 0.8f, 1.0f,
+            0.8f, 0.0f, 0.0f, 1.0f,
+            0.0f, 0.8f, 0.0f, 1.0f,
+            0.0f, 0.0f, 0.8f, 1.0f,
+            0.8f, 0.8f, 0.0f, 1.0f,
+            0.0f, 0.8f, 0.8f, 1.0f,
+            0.8f, 0.0f, 0.8f, 1.0f,
+            0.8f, 0.0f, 0.0f, 1.0f,
+            0.0f, 0.8f, 0.0f, 1.0f,
+            0.0f, 0.0f, 0.8f, 1.0f,
+            0.8f, 0.8f, 0.0f, 1.0f,
+            0.0f, 0.8f, 0.8f, 1.0f,
+            0.8f, 0.0f, 0.8f, 1.0f
     };
 
     float cubeCoords[] = {   // in counterclockwise order:
@@ -87,8 +111,9 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
         //setting the color to red
         GLES20.glClearColor(0.8f, 0.5f, 0.5f, 1f);
 
-        float coords[] = setCoords(2.5f, 3.5f, 8.5f, 3.5f);
+        float coords[] = setCoords(0.5f, 0.5f, 0.0f, 0.0f);
         coords = toDrawCoords(coords);
+        Log.d("coords", "here are the DrawCoords: " + Arrays.toString(coords) + "\n");
 
         //setting the shape up
         tetra = new Triangle(coords, colors);
@@ -118,12 +143,12 @@ public class OpenGLRenderer implements GLSurfaceView.Renderer {
             float coords[] = {
                     x1, y1, 0f, //front bottom left, v0, v13, v18
                     x2, y2, 0f, //front bottom right, v1, v9, v19
-                    x1, y1, 5f, //front top left, v2, v15, v20
-                    x2, y2, 5f, //front top right, v3, v11, v21
+                    x1, y1, 1f, //front top left, v2, v15, v20
+                    x2, y2, 1f, //front top right, v3, v11, v21
                     x1, (y1+0.5f), 0f, //back bottom left, v4, v12, v16
                     x2, (y2+0.5f), 0f, //back bottom right, v5, v8, v17
-                    x1, (y1+0.5f), 5f, //back top left, v6, v14, v22
-                    x2, (y2+0.5f), 5f //back top right, v7, v10, v23
+                    x1, (y1+0.5f), 1f, //back top left, v6, v14, v22
+                    x2, (y2+0.5f), 1f //back top right, v7, v10, v23
             };
             return coords;
         }

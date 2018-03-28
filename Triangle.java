@@ -105,10 +105,10 @@ public class Triangle {
         if (ls[0] == 0) {
             throw new RuntimeException("Error creating program.");
         }
-//culling... only put back in if needed
-//        GLES20.glFrontFace(GLES20.GL_CCW);
-//        GLES20.glCullFace(GLES20.GL_BACK);
-//        GLES20.glEnable(GLES20.GL_CULL_FACE);
+        //culling... only put back in if needed
+        GLES20.glFrontFace(GLES20.GL_CCW);
+        GLES20.glCullFace(GLES20.GL_BACK);
+        GLES20.glEnable(GLES20.GL_CULL_FACE);
     }
 
     public void draw(float[] mvpMatrix) {
