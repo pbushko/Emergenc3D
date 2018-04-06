@@ -106,7 +106,7 @@ public class Triangle {
             throw new RuntimeException("Error creating program.");
         }
         //culling... only put back in if needed
-        GLES20.glFrontFace(GLES20.GL_CCW);
+        GLES20.glFrontFace(GLES20.GL_CW);
         GLES20.glCullFace(GLES20.GL_BACK);
         GLES20.glEnable(GLES20.GL_CULL_FACE);
     }
