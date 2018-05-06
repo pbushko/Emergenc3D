@@ -3,6 +3,7 @@ package com.example.pbush.modelhelp;
 import android.app.Activity;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.view.View;
 
 /**
  * Created by pbush on 3/14/2018.
@@ -13,6 +14,15 @@ import android.os.Bundle;
 public class GlActivity extends Activity{
 
     private GLSurfaceView openGLView;
+    private float mScaleFactor = 1.f;
+    public void setScaledZoomIn(View view) {
+        float curScale = OpenGLRenderer.getScaled();
+        OpenGLRenderer.setScaled((curScale += mScaleFactor));
+    }
+    public void setScaledZoomOut(View view) {
+        float curScale = OpenGLRenderer.getScaled();
+        OpenGLRenderer.setScaled((curScale -= mScaleFactor));
+    }
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -36,12 +36,17 @@ public class MainActivity extends Activity {
 
     ImageView imgView;
     Button load_photo;
-    private Bitmap toDisplay;
+    public static Bitmap toDisplay;
+    private static Bitmap userBitmap;
     String imgDecodableString;
+    static float col[] = new float[3];
     private static int RESULT_LOAD_IMG = 1;
     private static int MIN_WALL_WIDTH = 5;
-    private static int MIN_WALL_LENGTH = 20;
-
+    private static int MIN_WALL_LENGTH_VERT = 20;
+    private static int MIN_WALL_LENGTH_HOR = 15;
+    private static float BOUND = 0.3f;
+    public static ArrayList userCoords = new ArrayList<Integer>();
+    public static ArrayList windowCoords = new ArrayList<Integer>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -92,8 +97,11 @@ public class MainActivity extends Activity {
                 }
 
                 toDisplay = bmp;
-                Log.d("walls", "wall coords found: "+Arrays.toString(findWalls()));
-                //imgView.setImageBitmap(bmp);
+                userBitmap = toDisplay.copy(toDisplay.getConfig(), true);
+                imgView.setImageBitmap(userBitmap);
+                //resetting the user input when a new image is selected
+                userCoords = new ArrayList<Integer>();
+                windowCoords = new ArrayList<Integer>();
             } else {
                 Toast.makeText(this, "You haven't picked Image",
                         Toast.LENGTH_LONG).show();
@@ -113,61 +121,263 @@ public class MainActivity extends Activity {
         return image;
     }
 
-    private int[] findWalls() {
+    public static int[] findWalls() {
         Bitmap bmp = toDisplay;
         int h = bmp.getHeight();
         int w = bmp.getWidth();
         ArrayList coords = new ArrayList<Integer>();
-        ArrayList testi = new ArrayList<Integer>();
-        ArrayList testj = new ArrayList<Integer>();
-        ArrayList testHeight = new ArrayList<Integer>();
 
         //go through pixel chunks and see if there are black vertical lines
         for (int j = 0; j < h; j++) {
             for (int i = 0; i < w; i++) {
                 int pix = bmp.getPixel(i, j);
-                if (pix == BLACK) {
+                Color.RGBToHSV(Color.red(pix), Color.green(pix), Color.blue(pix), col);
+                if (col[2] <= BOUND) {
                     //checking to see if the black pixel is too close to the edge to be
                     //part of a wall.  if too close, go to the next row of pixels
-                    if (i >= w - MIN_WALL_WIDTH)
-                        i = w;
-                    //if not too close, check if it is a wall!
-                    else {
-                        //look at if it's black for a whole width
-                        if (isWallWidthVertical(bmp, i, j)) {
-                            //check if the wall is one we've already found before
-                            if (!horizFoundBefore(i, j, toArr(coords))) {
-                                //find the y coords of the wall
-                                int height = getWallLength(bmp, i, j);
+                    //look at if it's black for a whole width; checking the "vertical" walls
+                    //check if the wall is one we've already found before
+                    if (i < w - MIN_WALL_WIDTH && !vertFoundBefore(i, j, toArr(coords)) && isWallWidthVertical(bmp, i, j)) {
+                        //find the y coords of the wall
+                        int height = getWallLength(bmp, i, j, h);
+                        if (height >= MIN_WALL_LENGTH_VERT) {
+                            coords.add(i);
+                            coords.add(j);
+                            coords.add(i + MIN_WALL_WIDTH * 2);
+                            coords.add(j + height);
 
-                                if (height >= MIN_WALL_LENGTH) {
-                                    coords.add(i + 5);
-                                    coords.add(j);
-                                    coords.add(i + 5);
-                                    coords.add(j + height);
-                                    testi.add(i);
-                                    testj.add(j);
-                                    testHeight.add(height);
+                            if (j+height+MIN_WALL_WIDTH+5 < h && i-5 > 0 && isWindowVert(bmp, i, (j+height+1))) {
+                                int windowHeight = getWindowLength(bmp, i, j+height+1, h);
+                                if(windowHeight >= MIN_WALL_LENGTH_VERT) {
+                                    windowCoords.add(i);
+                                    windowCoords.add(j + height);
+                                    windowCoords.add(i + MIN_WALL_WIDTH * 2);
+                                    windowCoords.add(j + height + windowHeight);
                                 }
-//                                if ((int) coords.get(coords.size() - 1) == j + height) {
-//                                    colorWalls(w, h, testi, testj, testHeight, newBmp);
-//                                    return toArr(coords);
-//                                }
                             }
-                            //ofsetting  i so we don't find the same wall
-                            i += MIN_WALL_WIDTH * 2;
+                        }
+                    }
+                    //checking the "horizontal" walls
+                    if(j < h - MIN_WALL_WIDTH && !horizFoundBefore(i, j, toArr(coords)) && isWallWidthHorizontal(bmp, i, j)) {
+                        int width = getWallWidth(bmp, i, j, w);
+                        if (width >= MIN_WALL_LENGTH_HOR) {
+                            coords.add(i);
+                            coords.add(j);
+                            coords.add(i + width);
+                            coords.add(j + MIN_WALL_WIDTH * 2);
+
+                            if (i+width+MIN_WALL_WIDTH+5 < w && j-5 > 0 && isWindowHoriz(bmp, (i+width+1), j)) {
+                                int windowWidth = getWindowWidth(bmp, i+width+1, j, w);
+                                if(windowWidth >= MIN_WALL_LENGTH_HOR) {
+                                    windowCoords.add(i + width);
+                                    windowCoords.add(j);
+                                    windowCoords.add(i + width + windowWidth);
+                                    windowCoords.add(j + MIN_WALL_WIDTH * 2);
+                                }
+                            }
                         }
                     }
                 }
             }
         }
-        //setting the coords to a different color so I can see what it finds
-        Bitmap newBmp = toDisplay.copy(toDisplay.getConfig(), true);
-        colorWalls(w, h, toArr(testi), toArr(testj), toArr(testHeight), newBmp);
         return toArr(coords);
     }
 
-    private int[] toArr(ArrayList<Integer> is) {
+    private static boolean isWallWidthVertical(Bitmap bmp, int x, int y){
+        int tot = 0;
+        for (int k = 1; k < MIN_WALL_WIDTH + 1 && k > 0; k++) {
+            int pix = bmp.getPixel(x + k, y);
+            Color.RGBToHSV(Color.red(pix), Color.green(pix), Color.blue(pix), col);
+            //can't be a wall if it's missing a black pixel
+            if (col[2] <= BOUND) {
+                tot++;
+            }
+        }
+        if(tot >= MIN_WALL_WIDTH) {
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean isWallWidthHorizontal(Bitmap bmp, int x, int y){
+        int tot = 0;
+        for (int k = 1; k < MIN_WALL_WIDTH + 1 && k > 0; k++) {
+            int pix = bmp.getPixel(x, y+k);
+            Color.RGBToHSV(Color.red(pix), Color.green(pix), Color.blue(pix), col);
+            //can't be a wall if it's missing a black pixel
+            if (col[2] <= BOUND) {
+                tot++;
+            }
+        }
+        if(tot >= MIN_WALL_WIDTH) {
+            return true;
+        }
+        return false;
+    }
+
+    private static int getWallLength(Bitmap bmp, int x, int y, int h) {
+        int count = 0; //how far down the wall goes from it's start
+        for (int i = y; i < h; i++) {
+            if (isWallWidthVertical(bmp, x, i))
+                count++;
+            else
+                return count;
+        }
+        return count;
+    }
+
+    private static int getWallWidth(Bitmap bmp, int x, int y, int w) {
+        int count = 0; //how far down the wall goes from it's start
+        for (int i = x; i < w; i++) {
+            if (isWallWidthHorizontal(bmp, i, y))
+                count++;
+            else
+                return count;
+        }
+        return count;
+    }
+
+    private static boolean vertFoundBefore(int i, int j, int[] coords) {
+        int len = coords.length;
+        for(int k = 0; k < len; k+=4) {
+            //when looking at the x coordinate, is it within the same y vals?
+            if(coords[k] - (MIN_WALL_WIDTH * 3) <= i && coords[k] + (MIN_WALL_WIDTH * 3) >= i) {
+                if (coords[k + 1] <= j && coords[k + 3] >= j) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean horizFoundBefore(int i, int j, int[] coords) {
+        int len = coords.length;
+        for(int k = 0; k < len; k+=4) {
+            //when looking at the y coordinate, is it within the same x vals?
+            if(coords[k+1] - (MIN_WALL_WIDTH * 5) <= j && coords[k+1] + (MIN_WALL_WIDTH * 5) >= j) {
+                if (coords[k] <= i && coords[k + 2] >= i) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    //look to see if a window is attached to the wall
+    private static boolean isWindowVert(Bitmap bmp, int x, int y) {
+        if (x-2 < 0 || x+MIN_WALL_WIDTH*2+2 >= bmp.getWidth())
+            return false;
+        int pix[] = new int[5+MIN_WALL_WIDTH*2];
+        pix[0] = bmp.getPixel(x-2, y);
+        pix[1] = bmp.getPixel(x-1, y);
+        pix[2] = bmp.getPixel(x, y);
+        pix[3] = bmp.getPixel(x+1, y);
+        pix[4] = bmp.getPixel(x+2, y);
+        for(int k = -1; k < pix.length-6; k++) {
+            pix[k+6] = bmp.getPixel(x+MIN_WALL_WIDTH+k, y);
+        }
+        float cols[] = new float[pix.length];
+        for (int k = 0; k < pix.length; k++) {
+            Color.RGBToHSV(Color.red(pix[k]), Color.green(pix[k]), Color.blue(pix[k]), col);
+            cols[k] = col[2];
+        }
+        return ((cols[0]<=BOUND || cols[1]<=BOUND || cols[2]<=BOUND || cols[3]<=BOUND || cols[4]<=BOUND) && check(cols));
+    }
+
+    private static boolean check(float[] toCheck) {
+        for(int i = 3; i < toCheck.length; i++) {
+            if(toCheck[i] <= BOUND)
+                return true;
+        }
+        return false;
+    }
+
+    private static boolean isWindowHoriz(Bitmap bmp, int x, int y) {
+        if (y-2 < 0 || y+MIN_WALL_WIDTH*2+2 >= bmp.getHeight())
+            return false;
+        int pix[] = new int[5+MIN_WALL_WIDTH*2];
+        pix[0] = bmp.getPixel(x, y-2);
+        pix[1] = bmp.getPixel(x, y-1);
+        pix[2] = bmp.getPixel(x, y);
+        pix[3] = bmp.getPixel(x, y+1);
+        pix[4] = bmp.getPixel(x, y+2);
+        for(int k = -1; k < pix.length-6; k++) {
+            pix[k+6] = bmp.getPixel(x, y+MIN_WALL_WIDTH+k);
+        }
+        float cols[] = new float[pix.length];
+        for (int k = 0; k < pix.length; k++) {
+            Color.RGBToHSV(Color.red(pix[k]), Color.green(pix[k]), Color.blue(pix[k]), col);
+            cols[k] = col[2];
+        }
+        return ((cols[0]<=BOUND || cols[1]<=BOUND || cols[2]<=BOUND || cols[3]<=BOUND || cols[4]<=BOUND) && check(cols));
+    }
+
+    private static int getWindowLength(Bitmap bmp, int x, int y, int h) {
+        int count = 0; //how far down the wall goes from it's start
+        for (int i = y; i+MIN_WALL_WIDTH+5 < h; i++) {
+            if (isWallWidthVertical(bmp, x, i))
+                return count;
+            else if (isWindowVert(bmp, x, i))
+                count++;
+            else
+                return count;
+        }
+        return count;
+    }
+
+    private static int getWindowWidth(Bitmap bmp, int x, int y, int w) {
+        int count = 0; //how far down the wall goes from it's start
+        for (int i = x; i+MIN_WALL_WIDTH+5 < w; i++) {
+            if (isWallWidthHorizontal(bmp, i, y))
+                return count;
+            else if (isWindowHoriz(bmp, i, y))
+                count++;
+            else
+                return count;
+        }
+        return count;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        int x = (int) event.getX();
+        int y = (int) event.getY();
+        //detect user touch
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            //if there has been a touch, paint a yellow square
+            if (toDisplay != null) {
+                int w = toDisplay.getWidth();
+                int h = toDisplay.getHeight();
+                //if within the image boundaries, draw
+                if (x <= w && y <= h) {
+                    //filling pixels that we'll put in
+                    int[] pix = new int[x*y];
+                    for (int i = 0; i < pix.length; i++) {
+                        pix[i] = YELLOW;
+                    }
+
+                    userCoords.add(x);
+                    userCoords.add(y);
+                    userCoords.add(x+(MIN_WALL_WIDTH*2));
+                    userCoords.add(y+(MIN_WALL_WIDTH*2));
+
+                    if (x > 8 && y > 8)
+                        userBitmap.setPixels(pix, 0, w, (x - 8), (y - 8), 16, 16);
+                    imgView.setImageBitmap(userBitmap);
+                }
+            }
+        }
+        return true;
+    }
+
+    public static int[] getUserCoords() {
+        return toArr(userCoords);
+    }
+    public static int[] getWindowCoords() {
+        return toArr(windowCoords);
+    }
+
+    private static int[] toArr(ArrayList<Integer> is) {
         int size = is.size();
         if (size == 0) {
             int retVal[] = new int[4];
@@ -179,88 +389,4 @@ public class MainActivity extends Activity {
         }
         return retVal;
     }
-
-    private boolean isWallWidthVertical(Bitmap bmp, int x, int y){
-        int tot = 0;
-        for (int k = 1; k < MIN_WALL_WIDTH + 1 && k > 0; k++) {
-            int check = bmp.getPixel(x + k, y);
-            //can't be a wall if it's missing a black pixel
-            if (check == BLACK) {
-                tot++;
-            }
-        }
-        if(tot >= MIN_WALL_WIDTH - 3) {
-            return true;
-        }
-        return false;
-    }
-
-    private int getWallLength(Bitmap bmp, int x, int y) {
-        int count = 0; //how far down the wall goes from it's start
-        for (int i = y; i < bmp.getHeight(); i++) {
-            if (isWallWidthVertical(bmp, x, i))
-                count++;
-            else
-                return count;
-        }
-        return count;
-    }
-
-    private boolean horizFoundBefore(int i, int j, int[] coords) {
-        for(int k = 0; k < coords.length; k+=4) {
-            //Log.d("wow", "coords:" + coords[k] + " " + coords[k + 1] + " " + i + " " + j);
-            //when looking at the x coordinate, is it within the same y vals?
-            if(k%4 == 0 && coords[k] - (MIN_WALL_WIDTH * 3) <= i && coords[k] + (MIN_WALL_WIDTH * 3) >= i) {
-                if (coords[k + 1] <= j && coords[k + 3] >= j) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private void colorWalls(int w, int h, int[] i, int[] j, int[] height, Bitmap newBmp) {
-        int[] wallCol = new int[w*h];
-        for (int k = 0; k < wallCol.length; k++) {
-            wallCol[k] = MAGENTA;
-        }
-        for (int k = 0; k < i.length; k++) {
-            newBmp.setPixels(wallCol, 0, w, i[k],j[k], MIN_WALL_WIDTH, height[k]);
-        }
-        imgView.setImageBitmap(newBmp);
-        toDisplay = newBmp;
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        int x = (int) event.getX();
-        int y = (int) event.getY();
-        //detect user touch
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {
-            //if there has been a touch, paint a yellow square
-            Log.d("paint",
-                    "here is the image coords:" + toDisplay.getWidth() + "  " + toDisplay.getHeight());
-            Log.d("draw", "you touched here:" + x + "   " + y);
-            if (toDisplay != null) {
-                int w = toDisplay.getWidth();
-                int h = toDisplay.getHeight();
-                //if within the image boundaries, draw
-                if (x <= w && y <= h) {
-                    Bitmap newBmp = toDisplay.copy(toDisplay.getConfig(), true);
-                    //filling pixels that we'll put in
-                    int[] pix = new int[x*y];
-                    for (int i = 0; i < pix.length; i++) {
-                        pix[i] = YELLOW;
-                    }
-                    //Log.d("paint", "got here!");
-                    //newBmp.setPixel(x, y, RED);
-                    if (x > 8 && y > 8)
-                        newBmp.setPixels(pix, 0, w, (x - 8), (y - 8), 16, 16);
-                    imgView.setImageBitmap(newBmp);
-                }
-            }
-        }
-        return true;
-    }
-
 }

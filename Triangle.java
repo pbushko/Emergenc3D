@@ -79,11 +79,9 @@ public class Triangle {
 
         // Pass in the shader source.
         GLES20.glShaderSource(vertexShaderHandle, vertexShaderCode);
-        // Compile the shader.
         GLES20.glCompileShader(vertexShaderHandle);
         // Pass in the shader source.
         GLES20.glShaderSource(fragmentShaderHandle, fragmentShaderCode);
-        // Compile the shader.
         GLES20.glCompileShader(fragmentShaderHandle);
 
         // create empty OpenGL ES Program
