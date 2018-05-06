@@ -1,2 +1,0 @@
-# ModelHelp
-for my IW
